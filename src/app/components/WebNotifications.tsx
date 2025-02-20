@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export default function WebNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [sdkLoaded, setSdkLoaded] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [, setNotification] = useState<string | null>(null);
   const [showManagement, setShowManagement] = useState(false);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export default function WebNotifications() {
       w.PushEngage.push([
         "init",
         {
-          appId: "915f6022-c9da-4c72-9b8b-6f64491f355f",
+          appId: "",
         },
       ]);
 
@@ -99,7 +99,7 @@ export default function WebNotifications() {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Api-Key": "9b85889d-0f2d-4a2f-a540-699b480edbdb",
+        "Api-Key": "",
       },
       body: JSON.stringify({
         notification_title: "Test Notification",
