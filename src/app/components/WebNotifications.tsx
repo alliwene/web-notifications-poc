@@ -1,71 +1,89 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import OneSignal from "react-onesignal";
-import axios from "axios";
+
+import { getFCMToken, firebaseConfig } from "@/lib/firebase";
 
 export default function Page() {
-  const [externalId] = useState("user_1_id");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      OneSignal.init({
-        appId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || "",
-        notifyButton: {
-          enable: true,
-        },
-        allowLocalhostAsSecureOrigin: true,
-      });
+      const setupNotifications = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === "granted") {
+            const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+            registration.active?.postMessage({
+              type: 'FIREBASE_CONFIG',
+              config: firebaseConfig
+            });
+            const token = await getFCMToken();
+            console.log('FCM Token:', token);
 
-      function pushSubscriptionChangeListener(event: any) {
-        if (event.current.token) {
-          console.log(`The push subscription has received a token!`);
+            try {
+              const response = await fetch('/api/register-endpoint', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  token: token
+                })
+              });
 
-          OneSignal.login(externalId);
+              const data = await response.json();
+              
+              if (data.endpointArn) {
+                setFcmToken(token);
+                console.log('Successfully registered with SNS:', data.endpointArn);
+              } else if (data.error) {
+                throw new Error(data.error);
+              } else {
+                throw new Error('Failed to create SNS endpoint');
+              }
+            } catch (apiError: any) {
+              throw new Error(`Registration failed: ${apiError.message}`);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to setup notifications:", err);
+          setError("Failed to setup notifications");
         }
-      }
+      };
 
-      OneSignal.User.PushSubscription.addEventListener(
-        "change",
-        pushSubscriptionChangeListener
-      );
+      setupNotifications();
     }
-  }, [externalId]);
+  }, []);
 
   const sendTestNotification = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      await axios.post(
-        "https://api.onesignal.com/notifications?c=push",
-        {
-          app_id: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || "",
-          contents: {
-            en: "This is a test notification!",
-            pt: "Este é um teste de notificação!",
-          },
-          include_aliases: {
-            external_id: [externalId],
-          },
-          target_channel: "push",
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            accept: "application/json",
-            Authorization: `Key ${process.env.NEXT_PUBLIC_ONESIGNAL_API_KEY}`,
-            "content-type": "application/json",
-          },
-        }
-      );
+        body: JSON.stringify({
+          title: "Test Notification",
+          body: "This is a test notification!"
+        })
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to send notification');
+      }
+
+      console.log("Notification sent successfully");
+      
     } catch (err: any) {
       setError(
-        err.response?.data?.errors?.[0] ||
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to send notification"
+        err.message || "Failed to send notification"
       );
     } finally {
       setLoading(false);
@@ -77,14 +95,17 @@ export default function Page() {
       <h1 className="text-2xl font-bold">Web Notifications Demo</h1>
       <button
         onClick={sendTestNotification}
-        disabled={loading}
+        disabled={loading || !fcmToken}
         className={`px-4 py-2 rounded-md text-white ${
-          loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
+          loading || !fcmToken ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
         }`}
       >
         {loading ? "Sending..." : "Send Test Notification"}
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
+      {!fcmToken && !error && (
+        <p className="text-yellow-500">Please allow notifications to continue</p>
+      )}
     </div>
   );
 }
