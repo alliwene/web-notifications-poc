@@ -18,7 +18,7 @@ export default function Page() {
             const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
             registration.active?.postMessage({
               type: 'FIREBASE_CONFIG',
-              config: firebaseConfig
+              config: firebaseConfig,
             });
             const token = await getFCMToken();
             console.log('FCM Token:', token);

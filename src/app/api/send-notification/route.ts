@@ -12,6 +12,11 @@ export async function POST(request: Request) {
       Message: JSON.stringify({
         default: body,
         GCM: JSON.stringify({
+          data: {
+            title,
+            body,
+            click_action: process.env.NEXT_PUBLIC_APP_URL || ""
+          },
           notification: {
             title,
             body,
