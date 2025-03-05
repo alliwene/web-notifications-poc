@@ -93,9 +93,9 @@ pnpm dev
 
 - `NEXT_PUBLIC_SNS_TOPIC_ARN` - AWS SNS topic ARN
 - `NEXT_PUBLIC_SNS_PLATFORM_APP_ARN` - AWS SNS platform application ARN
-- `NEXT_PUBLIC_AWS_REGION` - AWS region
-- `NEXT_PUBLIC_AWS_ACCESS_KEY_ID` - AWS access key ID
-- `NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY` - AWS secret access key
+- `AWS_REGION` - AWS region
+- `AWS_ACCESS_KEY_ID` - AWS access key ID
+- `AWS_SECRET_ACCESS_KEY` - AWS secret access key
 
 ### Web Push Configuration
 
