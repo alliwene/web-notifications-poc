@@ -12,27 +12,33 @@ export async function POST(request: Request) {
       Message: JSON.stringify({
         default: body,
         GCM: JSON.stringify({
-          data: {
-            title,
-            body,
-            click_action: process.env.NEXT_PUBLIC_APP_URL || ""
+          fcmV1Message: {
+            validate_only: false,
+            message: {
+              notification: {
+                title,
+                body,
+              },
+              webpush: {
+                notification: {
+                  title,
+                  body,
+                  badge: "1",
+                },
+              },
+            },
           },
-          notification: {
-            title,
-            body,
-            click_action: process.env.NEXT_PUBLIC_APP_URL || ""
-          }
-        })
+        }),
       }),
-      MessageStructure: "json"
+      MessageStructure: "json",
     });
 
     await snsClient.send(command);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error sending notification:', error);
+    console.error("Error sending notification:", error);
     return NextResponse.json(
-      { error: 'Failed to send notification' },
+      { error: "Failed to send notification" },
       { status: 500 }
     );
   }

@@ -7,14 +7,12 @@ importScripts(
 
 let messaging = null;
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'FIREBASE_CONFIG') {
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "FIREBASE_CONFIG") {
     try {
       firebase.initializeApp(event.data.config);
       messaging = firebase.messaging.isSupported()
-        ? firebase.messaging({
-            serviceWorkerRegistration: self.registration
-          })
+        ? firebase.messaging()
         : null;
 
       if (messaging) {
@@ -22,16 +20,13 @@ self.addEventListener('message', (event) => {
           const { notification } = payload;
           const options = {
             body: notification.body,
-            data: {
-              url: notification.click_action,
-            },
           };
 
           self.registration.showNotification(notification.title, options);
         });
       }
     } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
+      console.error("Failed to initialize Firebase:", error);
     }
   }
 });
